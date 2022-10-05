@@ -171,7 +171,8 @@ uses
   cPyRemoteDebugger,
   cProjectClasses,
   cSSHSupport,
-  cPySSHDebugger;
+  cPySSHDebugger,
+  cPyAndroidDebugger;
 
 { TPythonControl }
 
@@ -189,7 +190,7 @@ begin
 end;
 
 procedure TPythonControl.Debug(ARunConfig: TRunConfiguration; InitStepIn : Boolean = False;
-      RunToCursorLine : integer = -1);
+  RunToCursorLine : integer = -1);
 begin
   SetRunConfig(ARunConfig);
 
@@ -474,6 +475,7 @@ Var
   Cursor : IInterface;
   RemoteInterpreter : TPyRemoteInterpreter;
   Connected : Boolean;
+  RunTimeInterpreter: boolean;
   Msg : string;
   SSHServer: TSSHServer;
 begin
@@ -499,7 +501,7 @@ begin
         ActiveDebugger := ActiveInterpreter.CreateDebugger;
         PyIDEOptions.PythonEngineType := peInternal;
       end;
-    peRemote, peRemoteTk, peRemoteWx, peSSH:
+    peRemote, peRemoteTk, peRemoteWx, peRemoteAndroid, peSSH:
       begin
         SSHServer := nil;
         if Value = peSSH then begin
@@ -520,16 +522,28 @@ begin
         // Destroy any active remote interpeter
         ActiveDebugger := nil;
         ActiveInterpreter := nil;
+        RunTimeInterpreter := false;
         try
           if Value = peSSH then
             RemoteInterpreter := TPySSHInterpreter.Create(SSHServer)
+          else if Value = peRemoteAndroid then
+            RemoteInterpreter := TPyRemoteAndroidInterpreter.Create()
           else
             RemoteInterpreter := TPyRemoteInterpreter.Create(Value);
           Connected := RemoteInterpreter.Connected;
+          RunTimeInterpreter := RemoteInterpreter.RunTimeOnly;
         except
           Connected := False;
         end;
         if Connected then begin
+          ActiveInterpreter := RemoteInterpreter;
+          ActiveDebugger := ActiveInterpreter.CreateDebugger;
+          PyIDEOptions.PythonEngineType := Value;
+
+          // Add extra project paths
+          if Assigned(ActiveProject) then
+            ActiveProject.AppendExtraPaths;
+        end else if RunTimeInterpreter then begin
           ActiveInterpreter := RemoteInterpreter;
           ActiveDebugger := ActiveInterpreter.CreateDebugger;
           PyIDEOptions.PythonEngineType := Value;
@@ -552,6 +566,7 @@ begin
     peRemote : Msg := Format(_(SEngineActive), [_('Remote')]);
     peRemoteTk : Msg := Format(_(SEngineActive), [_('Remote (Tk)')]);
     peRemoteWx : Msg := Format(_(SEngineActive), ['Remote (Wx)']);
+    peRemoteAndroid : Msg := '*** Remote (Android) engine is only active while app is running in debug mode ***';// Format(_(SEngineActive), ['Remote (Android)']);
     peSSH : Msg := Format(_(SEngineActive), [Format('"%s" SSH', [ActiveSSHServerName])]);
   end;
   GI_PyInterpreter.ClearLastPrompt;
