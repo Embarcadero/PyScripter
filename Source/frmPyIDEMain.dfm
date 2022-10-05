@@ -856,6 +856,9 @@ object PyIDEMainForm: TPyIDEMainForm
           object mnEngineRemoteWx: TSpTBXItem
             Action = actPythonRemoteWx
           end
+          object mnPythonEngineRemoteAndroid: TSpTBXItem
+            Action = actPythonRemoteAndroid
+          end
           object mnPythonEngineSSH: TSpTBXItem
             Action = actPythonSSH
           end
@@ -2047,6 +2050,17 @@ object PyIDEMainForm: TPyIDEMainForm
       HelpContext = 340
       HelpType = htContext
       Hint = 'Use a remote Python engine for wxPython applications'
+      OnExecute = actPythonEngineExecute
+    end
+    object actPythonRemoteAndroid: TAction
+      Tag = 5
+      Category = 'Run'
+      AutoCheck = True
+      Caption = 'Remote (&Android)'
+      GroupIndex = 1
+      HelpContext = 340
+      HelpType = htContext
+      Hint = 'Use a remote Python engine for Android applications'
       OnExecute = actPythonEngineExecute
     end
     object actNewFile: TAction

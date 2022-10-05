@@ -1129,6 +1129,8 @@ type
     SpTBXItem15: TSpTBXItem;
     spiLspLed: TSpTBXItem;
     vilTabDecorators: TVirtualImageList;
+    actPythonRemoteAndroid: TAction;
+    mnPythonEngineRemoteAndroid: TSpTBXItem;
     procedure mnFilesClick(Sender: TObject);
     procedure actEditorZoomInExecute(Sender: TObject);
     procedure actEditorZoomOutExecute(Sender: TObject);
@@ -3646,6 +3648,7 @@ begin
     peRemote : actPythonRemote.Checked := True;
     peRemoteTk : actPythonRemoteTk.Checked := True;
     peRemoteWx : actPythonRemoteWx.Checked := True;
+    peRemoteAndroid: actPythonRemoteAndroid.Checked := true;
     peSSH : actPythonSSH.Checked := True;
   end;
 
