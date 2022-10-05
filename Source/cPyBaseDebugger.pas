@@ -134,6 +134,7 @@ type
     function GetObjectType(Ob : Variant) : string; virtual; abstract;
     function UnitTestResult : Variant; virtual; abstract;
     function NameSpaceItemFromPyObject(aName : string; aPyObject : Variant): TBaseNameSpaceItem; virtual; abstract;
+    function RunTimeOnly: boolean; virtual;
     property EngineType : TPythonEngineType read fEngineType;
     property InterpreterCapabilities : TInterpreterCapabilities read fInterpreterCapabilities;
     property CanDoPostMortem: Boolean read fCanDoPostMortem write fCanDoPostMortem;
@@ -146,6 +147,7 @@ type
   TPyBaseDebugger = class(TObject)
   {  Base (abstract) class for implementing Python Debuggers }
   protected
+    procedure InitializeDebugger; virtual; abstract;
     procedure SetCommandLine(ARunConfig : TRunConfiguration); virtual; abstract;
     procedure RestoreCommandLine; virtual; abstract;
     procedure SetDebuggerBreakpoints; virtual; abstract;
@@ -340,6 +342,11 @@ begin
     Source := CleanEOLs(FileToStr(FileName))+#10;
     RunSource(Source, FileName, 'exec');
   end;
+end;
+
+function TPyBaseInterpreter.RunTimeOnly: boolean;
+begin
+  Result := false;
 end;
 
 function TPyBaseInterpreter.SystemTempFolder: string;
