@@ -123,6 +123,7 @@ type
     fDebugEvent: TSimpleEvent;
     InternalInterpreter : TPyInternalInterpreter;
   protected
+    procedure InitializeDebugger; override;
     procedure SetCommandLine(ARunConfig : TRunConfiguration); override;
     procedure RestoreCommandLine; override;
     procedure SetDebuggerBreakpoints; override;
@@ -471,6 +472,11 @@ begin
   FreeAndNil(fMainThread);
   FreeAndNil(fDebugEvent);
   inherited;
+end;
+
+procedure TPyInternalDebugger.InitializeDebugger;
+begin
+  //
 end;
 
 procedure TPyInternalDebugger.EnterPostMortem;
