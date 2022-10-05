@@ -119,7 +119,10 @@ uses
   LspClient in 'LspClient.pas',
   LspUtils in 'LspUtils.pas',
   SynEditLsp in 'SynEditLsp.pas',
-  JediLspClient in 'JediLspClient.pas';
+  JediLspClient in 'JediLspClient.pas',
+  cPyAndroidDebugger in 'cPyAndroidDebugger.pas',
+  cAndroidPlugin in 'cAndroidPlugin.pas',
+  cAndroidPluginAdapter in 'cAndroidPluginAdapter.pas';
 
 {$R *.RES}
 {$R WebCopyAvi.RES}
