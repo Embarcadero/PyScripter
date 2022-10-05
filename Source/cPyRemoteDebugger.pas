@@ -59,7 +59,7 @@ type
     ServerTask : ITask;
     DebuggerClass : TRemoteDebuggerClass;
     procedure CreateAndRunServerProcess; virtual;
-    procedure ConnectToServer;
+    procedure ConnectToServer; virtual;
     procedure ShutDownServer;  virtual;
     procedure ProcessServerOutput(const Bytes: TBytes; BytesRead: Cardinal);
   public
@@ -69,7 +69,7 @@ type
     function Compile(ARunConfig : TRunConfiguration) : Variant;
     procedure HandleRemoteException(const ExcInfo : Variant; SkipFrames : integer = 1);
     procedure ReInitialize; override;
-    procedure CheckConnected(Quiet : Boolean = False; Abort : Boolean = True);
+    procedure CheckConnected(Quiet : Boolean = False; Abort : Boolean = True);  virtual;
     procedure ServeConnection(MaxCount : integer = 0);
     // Python Path
     function SysPathAdd(const Path : string) : boolean; override;
@@ -129,6 +129,7 @@ type
   protected
     fDebuggerCommand : TDebuggerCommand;
     fRemotePython : TPyRemoteInterpreter;
+    procedure InitializeDebugger; override;
     procedure SetCommandLine(ARunConfig : TRunConfiguration); override;
     procedure RestoreCommandLine; override;
     procedure SetDebuggerBreakpoints; override;
@@ -390,8 +391,9 @@ begin
   begin
     fConnected := False;
     if not Quiet then
-      StyledMessageDlg(_(SRemoteServerNotConnected),
-        mtError, [mbAbort], 0);
+      TThread.Synchronize(nil, procedure() begin
+        StyledMessageDlg(_(SRemoteServerNotConnected), mtError, [mbAbort], 0);
+      end);
     //VariablesWindow.VariablesTree.Enabled := False;
     if Abort then
       System.SysUtils.Abort;
@@ -532,7 +534,7 @@ begin
   if fServerIsAvailable then begin
     fServerFile := TPyScripterSettings.UserDataPath + RemoteServerBaseName;
     case fEngineType of
-      peRemote, peSSH: ServerName := 'SimpleServer';
+      peRemote, peSSH, peRemoteAndroid: ServerName := 'SimpleServer';
       peRemoteTk: ServerName := 'TkServer';
       peRemoteWx: ServerName := 'WxServer';
     else
@@ -785,7 +787,7 @@ begin
       StyledMessageDlg(_(SErrorCreatingRemoteEngine) + E.Message, mtError, [mbAbort], 0);
     end;
   end;
-  if not (fServerIsAvailable and fConnected) then
+  if not (fServerIsAvailable and fConnected) and not RunTimeOnly then
   begin
     StyledMessageDlg(_(SCouldNotConnectRemoteEngine), mtError, [mbAbort], 0);
     ShutDownServer;
@@ -842,7 +844,7 @@ begin
           GI_PyInterpreter.AppendText(sLineBreak + _(SRemoteInterpreterInit));
           GI_PyInterpreter.AppendPrompt;
           // Recreate the Active debugger
-          PyControl.ActiveDebugger := DebuggerClass.Create(Self);
+          PyControl.ActiveDebugger := CreateDebugger();
 
           // Add extra project paths
           if Assigned(ActiveProject) then
@@ -1289,24 +1291,13 @@ end;
 constructor TPyRemDebugger.Create(RemotePython: TPyRemoteInterpreter);
 begin
   inherited Create;
+
   fRemotePython := RemotePython;
-  fDebugManager := fRemotePython.RPI.DebugManager;
-  fDebugManager.debugIDE :=
-    TPyInternalInterpreter(PyControl.InternalInterpreter).PyInteractiveInterpreter.debugIDE;
-
-  fMainDebugger := fDebugManager.main_debugger;
-
-  fMainThread := TThreadInfo.Create;
-  fMainThread.Name := 'MainThread';
-  fMainThread.Status := thrdRunning;
-  fMainThread.Thread_ID := fDebugManager.main_thread_id;
-
   fThreads := TObjectDictionary<Int64, TThreadInfo>.Create([doOwnsValues]);
-  fThreads.Add(fMainThread.Thread_ID, fMainThread);
-
-  fLineCache := fRemotePython.Conn.modules.linecache;
   fDebuggerCommand := dcNone;
   PyControl.BreakPointsChanged := True;
+
+  InitializeDebugger();
 end;
 
 destructor TPyRemDebugger.Destroy;
@@ -1320,6 +1311,24 @@ begin
   end;
   FreeAndNil(fThreads);
   inherited;
+end;
+
+procedure TPyRemDebugger.InitializeDebugger;
+begin
+  fDebugManager := fRemotePython.RPI.DebugManager;
+  fDebugManager.debugIDE :=
+    TPyInternalInterpreter(PyControl.InternalInterpreter).PyInteractiveInterpreter.debugIDE;
+
+  fMainDebugger := fDebugManager.main_debugger;
+
+  fMainThread := TThreadInfo.Create;
+  fMainThread.Name := 'MainThread';
+  fMainThread.Status := thrdRunning;
+  fMainThread.Thread_ID := fDebugManager.main_thread_id;
+
+  fThreads.Add(fMainThread.Thread_ID, fMainThread);
+
+  fLineCache := fRemotePython.Conn.modules.linecache;
 end;
 
 procedure TPyRemDebugger.EnterPostMortem;

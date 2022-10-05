@@ -25,11 +25,12 @@ type
       peRemote,     // rpyc based external Python - default
       peRemoteTk,   // specialized engines used to run GUI scripts
       peRemoteWx,
-      peSSH);       // SSH Python engine
+      peSSH,        // SSH Python engine
+      peRemoteAndroid); //specialized engine used to run Android apps
 
 const
   EngineTypeName : array [TPythonEngineType] of string =
-    ('Internal', 'Remote', 'Remote TK', 'Remote Wx', 'SSH');
+    ('Internal', 'Remote', 'Remote TK', 'Remote Wx', 'SSH', 'Remote Android');
   FilePosInfoFormat : string = '%s (%d:%d)';
   FilePosInfoRegExpr : string = '(.+) \((\d+):(\d+)\)$';
 
